@@ -1,6 +1,6 @@
 # errors
 
-The substitute for the golang pkg/errors, support print call stack and more ..
+The substitute for the golang [pkg/errors](https://golang.org/pkg/errors/), support print call stack and more ..
 
 ## Wrap exists error object
 
