@@ -64,4 +64,15 @@ code,ok := errors.Code(ec)
 
 ```
 
+## JSON support
+
+errors support marshal to json/ unmarshal from json
+
+unmarshal from json like this:
+
+```go
+	// if unmarshal failed this function return nil
+	ec := errors.FromJSON(data)
+```
+
 > one more thing: errors also support bind customer attributes. for details lookup [test example](./errors_test.go)

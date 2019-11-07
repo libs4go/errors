@@ -100,7 +100,7 @@ func TestAsIs(t *testing.T) {
 
 	require.True(t, Is(errWrap, err))
 
-	var target *errorCode
+	var target *ErrorCode
 
 	require.True(t, As(errWrap, &target))
 

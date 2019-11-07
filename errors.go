@@ -140,46 +140,47 @@ func Wrap(err error, fmtstr string, args ...interface{}) error {
 	return newCallStackError(fmt.Sprintf(fmtstr, args...), err, 2)
 }
 
-type errorCode struct {
+// ErrorCode .
+type ErrorCode struct {
 	Vendor  string                 `json:"vendor"`
 	Code    int                    `json:"code"`
 	Message string                 `json:"message"`
 	Attrs   map[string]interface{} `json:"attrs"`
 }
 
-func (ec *errorCode) Error() string {
+func (ec *ErrorCode) Error() string {
 
 	return fmt.Sprintf("(%s:%d) %s", ec.Vendor, ec.Code, ec.Message)
 }
 
-// func (ec *errorCode) MarshalJSON() ([]byte, error) {
+// func (ec *ErrorCode) MarshalJSON() ([]byte, error) {
 // 	return json.Marshal(ec)
 // }
 
-// func (ec *errorCode) UnmarshalJSON(b []byte) error {
+// func (ec *ErrorCode) UnmarshalJSON(b []byte) error {
 // 	return json.Unmarshal(b, ec)
 // }
 
 // Option .
-type Option func(ec *errorCode)
+type Option func(ec *ErrorCode)
 
 // WithCode error code option
 func WithCode(code int) Option {
-	return func(ec *errorCode) {
+	return func(ec *ErrorCode) {
 		ec.Code = code
 	}
 }
 
 // WithVendor error vendor option
 func WithVendor(vendor string) Option {
-	return func(ec *errorCode) {
+	return func(ec *ErrorCode) {
 		ec.Vendor = vendor
 	}
 }
 
 // WithAttr bind error customer attribute
 func WithAttr(name string, value interface{}) Option {
-	return func(ec *errorCode) {
+	return func(ec *ErrorCode) {
 		if ec.Attrs == nil {
 			ec.Attrs = make(map[string]interface{})
 		}
@@ -189,9 +190,10 @@ func WithAttr(name string, value interface{}) Option {
 }
 
 // FromJSON unmarshal errorcode from json
+// if any error occur， return nil
 func FromJSON(data []byte) error {
 
-	var ec errorCode
+	var ec ErrorCode
 
 	err := json.Unmarshal(data, &ec)
 
@@ -205,7 +207,7 @@ func FromJSON(data []byte) error {
 // New create errors enhance error object which support errorcode and vendor id
 func New(errmsg string, options ...Option) error {
 
-	ec := &errorCode{
+	ec := &ErrorCode{
 		Message: errmsg,
 		Code:    -1,
 		Vendor:  "errors",
@@ -220,7 +222,7 @@ func New(errmsg string, options ...Option) error {
 
 // Vendor get error associate vendor name
 func Vendor(err error) (string, bool) {
-	if ec, ok := Unwrap(err).(*errorCode); ok {
+	if ec, ok := Unwrap(err).(*ErrorCode); ok {
 		return ec.Vendor, true
 	}
 
@@ -229,7 +231,7 @@ func Vendor(err error) (string, bool) {
 
 // Code get error associate code
 func Code(err error) (int, bool) {
-	if ec, ok := Unwrap(err).(*errorCode); ok {
+	if ec, ok := Unwrap(err).(*ErrorCode); ok {
 		return ec.Code, true
 	}
 
@@ -239,7 +241,7 @@ func Code(err error) (int, bool) {
 // Attr get associate attribute value
 func Attr(err error, name string, value interface{}) bool {
 
-	if ec, ok := Unwrap(err).(*errorCode); ok {
+	if ec, ok := Unwrap(err).(*ErrorCode); ok {
 
 		if ec.Attrs == nil {
 			return false
