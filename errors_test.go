@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -104,4 +105,16 @@ func TestAsIs(t *testing.T) {
 	require.True(t, As(errWrap, &target))
 
 	require.True(t, err == target)
+}
+
+func TestJSON(t *testing.T) {
+	e := New("test")
+
+	buff, err := json.Marshal(e)
+
+	require.NoError(t, err)
+
+	println(string(buff))
+
+	require.Equal(t, FromJSON(buff), e)
 }

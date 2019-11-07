@@ -2,6 +2,7 @@ package errors
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -140,16 +141,24 @@ func Wrap(err error, fmtstr string, args ...interface{}) error {
 }
 
 type errorCode struct {
-	vendor  string
-	code    int
-	message string
-	attrs   map[string]interface{}
+	Vendor  string                 `json:"vendor"`
+	Code    int                    `json:"code"`
+	Message string                 `json:"message"`
+	Attrs   map[string]interface{} `json:"attrs"`
 }
 
 func (ec *errorCode) Error() string {
 
-	return fmt.Sprintf("(%s:%d) %s", ec.vendor, ec.code, ec.message)
+	return fmt.Sprintf("(%s:%d) %s", ec.Vendor, ec.Code, ec.Message)
 }
+
+// func (ec *errorCode) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(ec)
+// }
+
+// func (ec *errorCode) UnmarshalJSON(b []byte) error {
+// 	return json.Unmarshal(b, ec)
+// }
 
 // Option .
 type Option func(ec *errorCode)
@@ -157,35 +166,49 @@ type Option func(ec *errorCode)
 // WithCode error code option
 func WithCode(code int) Option {
 	return func(ec *errorCode) {
-		ec.code = code
+		ec.Code = code
 	}
 }
 
 // WithVendor error vendor option
 func WithVendor(vendor string) Option {
 	return func(ec *errorCode) {
-		ec.vendor = vendor
+		ec.Vendor = vendor
 	}
 }
 
 // WithAttr bind error customer attribute
 func WithAttr(name string, value interface{}) Option {
 	return func(ec *errorCode) {
-		if ec.attrs == nil {
-			ec.attrs = make(map[string]interface{})
+		if ec.Attrs == nil {
+			ec.Attrs = make(map[string]interface{})
 		}
 
-		ec.attrs[name] = value
+		ec.Attrs[name] = value
 	}
+}
+
+// FromJSON unmarshal errorcode from json
+func FromJSON(data []byte) error {
+
+	var ec errorCode
+
+	err := json.Unmarshal(data, &ec)
+
+	if err != nil {
+		return nil
+	}
+
+	return &ec
 }
 
 // New create errors enhance error object which support errorcode and vendor id
 func New(errmsg string, options ...Option) error {
 
 	ec := &errorCode{
-		message: errmsg,
-		code:    -1,
-		vendor:  "errors",
+		Message: errmsg,
+		Code:    -1,
+		Vendor:  "errors",
 	}
 
 	for _, option := range options {
@@ -198,7 +221,7 @@ func New(errmsg string, options ...Option) error {
 // Vendor get error associate vendor name
 func Vendor(err error) (string, bool) {
 	if ec, ok := Unwrap(err).(*errorCode); ok {
-		return ec.vendor, true
+		return ec.Vendor, true
 	}
 
 	return "", false
@@ -207,7 +230,7 @@ func Vendor(err error) (string, bool) {
 // Code get error associate code
 func Code(err error) (int, bool) {
 	if ec, ok := Unwrap(err).(*errorCode); ok {
-		return ec.code, true
+		return ec.Code, true
 	}
 
 	return -1, false
@@ -218,11 +241,11 @@ func Attr(err error, name string, value interface{}) bool {
 
 	if ec, ok := Unwrap(err).(*errorCode); ok {
 
-		if ec.attrs == nil {
+		if ec.Attrs == nil {
 			return false
 		}
 
-		if attr, ok := ec.attrs[name]; ok {
+		if attr, ok := ec.Attrs[name]; ok {
 
 			valType := reflect.TypeOf(value)
 			attrType := reflect.TypeOf(attr)
